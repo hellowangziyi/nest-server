@@ -1,0 +1,497 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model account_tab {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id   BigInt   @db.UnsignedBigInt
+  username     String   @unique(map: "uidx_username") @db.VarChar(128)
+  password     String   @db.VarChar(256)
+  gmt_created  DateTime @default(now()) @db.DateTime(0)
+  gmt_modified DateTime @default(now()) @db.DateTime(0)
+  is_deleted   Int      @default(0) @db.UnsignedTinyInt
+
+  @@unique([account_id, username], map: "uidx_account_id_username")
+}
+
+model order_info_tab {
+  id              BigInt           @id @default(autoincrement())
+  order_id        BigInt           @unique(map: "order_id")
+  payment_id      BigInt?
+  account_id      BigInt           @db.UnsignedBigInt
+  policy_id       BigInt?
+  product_id      BigInt?
+  order_status    Int
+  premium         Decimal          @db.Decimal(10, 2)
+  payment_time    DateTime?        @db.DateTime(0)
+  insurance_info  String?          @db.VarChar(1000)
+  travellers_info String?          @db.VarChar(1000)
+  is_deleted      Int              @default(0) @db.TinyInt
+  gmt_modified    DateTime         @db.DateTime(0)
+  gmt_created     DateTime         @db.DateTime(0)
+  policy_info_tab policy_info_tab?
+
+  @@index([policy_id], map: "order_info_tab_policy_id_index")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model payment_tab {
+  id             BigInt    @id @default(autoincrement())
+  payment_id     BigInt
+  account_id     BigInt?
+  order_id       BigInt
+  payment_status Int
+  payment_method String    @db.VarChar(50)
+  premium        Decimal   @db.Decimal(10, 2)
+  payment_time   DateTime? @db.DateTime(0)
+  is_deleted     Int?      @default(0) @db.TinyInt
+  gmt_created    DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime? @default(now()) @db.DateTime(0)
+
+  @@index([gmt_created], map: "payment_tab_gmt_created_index")
+  @@index([payment_id], map: "payment_tab_payment_id_index")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model policy_coverage_tab {
+  id                          BigInt                       @id @default(autoincrement()) @db.UnsignedBigInt
+  coverage_id                 BigInt?                      @unique(map: "coverage_id") @db.UnsignedBigInt
+  instance_id                 BigInt?                      @db.UnsignedBigInt
+  coverage_amount             Decimal                      @db.Decimal(10, 2)
+  coverage_name               String?                      @db.VarChar(255)
+  gmt_created                 DateTime                     @db.DateTime(0)
+  gmt_modified                DateTime                     @db.DateTime(0)
+  is_delete                   Int                          @db.TinyInt
+  policy_product_instance_tab policy_product_instance_tab? @relation(fields: [instance_id], references: [product_instance_id], onDelete: NoAction, onUpdate: NoAction, map: "policy_coverage_tab_ibfk_1")
+
+  @@index([instance_id], map: "instance_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model policy_customer_tab {
+  id                          BigInt                        @id @default(autoincrement()) @db.UnsignedBigInt
+  policy_customer_id          BigInt?                       @unique(map: "policy_customer_id") @db.UnsignedBigInt
+  policy_id                   BigInt?                       @db.UnsignedBigInt
+  product_instance_id         BigInt?                       @db.UnsignedBigInt
+  customer_name               String?                       @db.VarChar(100)
+  customer_birth              DateTime?                     @db.DateTime(0)
+  customer_nation             String?                       @db.VarChar(100)
+  customer_fin                String?                       @db.VarChar(100)
+  customer_phone              String?                       @db.VarChar(100)
+  customer_address            String?                       @db.VarChar(255)
+  customer_email              String?                       @db.VarChar(100)
+  customer_type               Int?                          @db.TinyInt
+  role                        Int?                          @db.TinyInt
+  gmt_created                 DateTime                      @db.DateTime(0)
+  gmt_modified                DateTime                      @db.DateTime(0)
+  is_delete                   Int                           @db.TinyInt
+  policy_product_instance_tab policy_product_instance_tab?  @relation(fields: [product_instance_id], references: [product_instance_id], onDelete: NoAction, onUpdate: NoAction, map: "policy_customer_tab_ibfk_1")
+  policy_info_tab             policy_info_tab?              @relation(fields: [policy_id], references: [policy_id], onDelete: NoAction, onUpdate: NoAction, map: "policy_customer_tab_policy_info_tab_policy_id_fk")
+  policy_subject_category_tab policy_subject_category_tab[]
+
+  @@index([policy_id], map: "policy_customer_tab_policy_info_tab_policy_id_fk")
+  @@index([role], map: "policy_customer_tab_role_index")
+  @@index([product_instance_id], map: "product_instance_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model policy_info_tab {
+  id                          BigInt                        @id @default(autoincrement()) @db.UnsignedBigInt
+  policy_id                   BigInt                        @unique(map: "policy_id") @db.UnsignedBigInt
+  active_date                 DateTime                      @db.DateTime(0)
+  expired_date                DateTime                      @db.DateTime(0)
+  account_id                  BigInt                        @db.UnsignedBigInt
+  order_id                    BigInt                        @unique(map: "policy_info_tab_pk")
+  premium                     Decimal                       @db.Decimal(10, 2)
+  policy_status               Int                           @db.TinyInt
+  gmt_created                 DateTime                      @db.DateTime(0)
+  gmt_modified                DateTime                      @db.DateTime(0)
+  is_delete                   Int                           @db.TinyInt
+  policy_customer_tab         policy_customer_tab[]
+  order_info_tab              order_info_tab                @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction, map: "policy_info_tab_order_info_tab_order_id_fk")
+  policy_product_instance_tab policy_product_instance_tab[]
+
+  @@index([expired_date], map: "idx_end_date")
+  @@index([active_date], map: "idx_start_date")
+  @@index([account_id], map: "policy_info_tab_account_id_index")
+  @@index([gmt_created(sort: Desc)], map: "policy_info_tab_gmt_created_index")
+  @@index([id, policy_status], map: "policy_info_tab_id_policy_status_index")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model policy_product_instance_tab {
+  id                  BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  product_instance_id BigInt?               @unique(map: "product_instance_id") @db.UnsignedBigInt
+  policy_id           BigInt?               @db.UnsignedBigInt
+  product_id          BigInt?               @db.UnsignedBigInt
+  product_name        String?               @db.VarChar(100)
+  product_picture_url String?               @db.VarChar(200)
+  gmt_created         DateTime              @db.DateTime(0)
+  gmt_modified        DateTime              @db.DateTime(0)
+  is_delete           Int                   @db.TinyInt
+  policy_coverage_tab policy_coverage_tab[]
+  policy_customer_tab policy_customer_tab[]
+  policy_info_tab     policy_info_tab?      @relation(fields: [policy_id], references: [policy_id], onDelete: NoAction, onUpdate: NoAction, map: "policy_product_instance_tab_ibfk_1")
+
+  @@index([policy_id], map: "policy_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model policy_subject_category_tab {
+  id                        BigInt                      @id @default(autoincrement()) @db.UnsignedBigInt
+  subject_category_id       BigInt?                     @unique(map: "subject_category_id") @db.UnsignedBigInt
+  customer_id               BigInt?                     @db.UnsignedBigInt
+  category_name             String?                     @db.VarChar(100)
+  gmt_created               DateTime                    @db.DateTime(0)
+  gmt_modified              DateTime                    @db.DateTime(0)
+  is_delete                 Int                         @db.TinyInt
+  policy_customer_tab       policy_customer_tab?        @relation(fields: [customer_id], references: [policy_customer_id], onDelete: NoAction, onUpdate: NoAction, map: "policy_subject_category_tab_ibfk_1")
+  policy_subject_travel_tab policy_subject_travel_tab[]
+
+  @@index([customer_id], map: "customer_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model policy_subject_travel_tab {
+  id                          BigInt                       @id @default(autoincrement()) @db.UnsignedBigInt
+  subject_travel_id           BigInt?                      @unique(map: "subject_travel_id") @db.UnsignedBigInt
+  category_id                 BigInt?                      @db.UnsignedBigInt
+  country_names               String?                      @db.VarChar(200)
+  travel_start_date           DateTime?                    @db.DateTime(0)
+  travel_end_date             DateTime?                    @db.DateTime(0)
+  gmt_created                 DateTime                     @db.DateTime(0)
+  gmt_modified                DateTime                     @db.DateTime(0)
+  is_delete                   Int                          @db.TinyInt
+  policy_subject_category_tab policy_subject_category_tab? @relation(fields: [category_id], references: [subject_category_id], onDelete: NoAction, onUpdate: NoAction, map: "policy_subject_travel_tab_ibfk_1")
+
+  @@index([category_id], map: "category_id")
+}
+
+model product_country_tab {
+  Id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  country_id   BigInt   @db.UnsignedBigInt
+  country_name String   @db.VarChar(255)
+  is_popular   Int      @default(0) @db.UnsignedTinyInt
+  country_sort Int
+  gmt_created  DateTime @db.DateTime(0)
+  gmt_modified DateTime @db.DateTime(0)
+  is_deleted   Int      @default(0) @db.UnsignedTinyInt
+  type         String   @db.VarChar(100)
+  operator     String   @default("") @db.VarChar(128)
+
+  @@unique([country_id, country_name], map: "product_country_tab_unique")
+}
+
+model product_coverage_related_tab {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  product_id   BigInt   @db.UnsignedBigInt
+  coverage_id  BigInt   @db.UnsignedBigInt
+  gmt_created  DateTime @db.DateTime(0)
+  gmt_modified DateTime @db.DateTime(0)
+  is_deleted   Int      @default(0) @db.UnsignedTinyInt
+
+  @@unique([product_id, coverage_id], map: "product_coverage_related_tab_unique")
+  @@index([product_id], map: "product_coverage_related_tab_product_id_index")
+}
+
+model product_coverage_tab {
+  id              BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  coverage_id     BigInt   @db.UnsignedBigInt
+  coverage_name   String   @db.VarChar(100)
+  coverage_amount Decimal  @db.Decimal(10, 0)
+  gmt_created     DateTime @db.DateTime(0)
+  gmt_modified    DateTime @db.DateTime(0)
+  is_deleted      Int      @default(0) @db.UnsignedTinyInt
+
+  @@unique([coverage_id, coverage_name], map: "product_coverage_tab_unique")
+  @@index([coverage_id], map: "product_coverage_tab_coverage_id_index")
+}
+
+model product_tab {
+  id                   BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  product_id           BigInt   @db.UnsignedBigInt
+  product_name         String   @db.VarChar(255)
+  product_form_price   Decimal  @db.Decimal(10, 0)
+  product_introduction String   @db.Text
+  product_category     String   @db.VarChar(255)
+  product_pic          String   @db.VarChar(255)
+  product_starttime    DateTime @db.DateTime(0)
+  product_endtime      DateTime @db.DateTime(0)
+  gmt_created          DateTime @db.DateTime(0)
+  gmt_modified         DateTime @db.DateTime(0)
+  is_deleted           Int      @default(0) @db.UnsignedTinyInt
+
+  @@unique([product_id, product_name], map: "product_tab_unique")
+  @@index([is_deleted], map: "product_tab_is_deleted_index")
+  @@index([product_id], map: "product_tab_product_id_index")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000000 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000001 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000002 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000003 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000004 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000005 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000006 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000007 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000008 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tracking_tab_00000009 {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  account_id     BigInt   @db.UnsignedBigInt
+  env            String   @default("") @db.VarChar(256)
+  type           String   @default("") @db.VarChar(32)
+  event          String   @default("") @db.VarChar(32)
+  current_page   String   @default("") @db.VarChar(128)
+  target_key     String   @default("") @db.VarChar(32)
+  event_time     DateTime @default(now()) @db.DateTime(0)
+  page_stay_time Int      @default(0)
+  metric_name    String   @default("") @db.VarChar(32)
+  metric_value   String   @default("") @db.VarChar(32)
+  product_id     BigInt   @default(0) @db.UnsignedBigInt
+  product_name   String   @default("") @db.VarChar(255)
+  page_name      String   @default("") @db.VarChar(32)
+  error_message  String   @default("") @db.VarChar(128)
+  gmt_created    DateTime @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime @default(now()) @db.DateTime(0)
+  is_deleted     Int      @default(0) @db.UnsignedTinyInt
+
+  @@index([account_id], map: "idx_account_id")
+}
