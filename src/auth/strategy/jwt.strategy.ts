@@ -4,9 +4,11 @@ import { Injectable } from '@nestjs/common';
 import { jwtSecret } from '@/common';
 
 /**
- * @两种策略模式:1.jwt认证
+ * @description 配置JWT策略
+ * @export
+ * @class JwtStrategy
+ * @extends {PassportStrategy(Strategy)}
  */
-
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
