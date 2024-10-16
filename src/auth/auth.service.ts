@@ -20,4 +20,9 @@ export class AuthService {
       token: this.jwtService.sign(payload),
     };
   }
+
+  async validateToken(token: string) {
+    const decoded = this.jwtService.verify(token);
+    return decoded;
+  }
 }
