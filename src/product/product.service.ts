@@ -24,6 +24,14 @@ export class ProductService {
       orderBy: {
         country_sort: 'asc',
       },
+      select: {
+        Id: true,
+        country_name: true,
+        operator: true,
+        country_id: true,
+        country_sort: true,
+        is_popular: true,
+      },
     });
 
     return countries.map((country) => plainToClass(Country, country));

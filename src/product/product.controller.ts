@@ -14,13 +14,7 @@ export class ProductController {
   async getCountryList() {
     const countries = await this.productService.getCountryList();
 
-    return {
-      code: 0,
-      message: 'Success',
-      data: {
-        countries,
-      },
-    };
+    return { countries };
   }
 
   /**
@@ -42,9 +36,6 @@ export class ProductController {
       countryIds,
       userInfo.email,
     );
-    return {
-      code: 0,
-      message: 'Success',
-    };
+    return null;
   }
 }

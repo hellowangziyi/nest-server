@@ -35,14 +35,8 @@ export class AuthController {
     };
 
     const token = this.jwtService.sign({ ...jwtPayload });
-    return {
-      code: 0,
-      data: {
-        token,
-        user: { ...jwtPayload },
-      },
-      message: 'login success',
-    };
+
+    return { token, user: { ...jwtPayload } };
   }
 
   /**
@@ -54,11 +48,7 @@ export class AuthController {
   @Get('check_logined')
   @UseGuards(JwtAuthGuard)
   async checkLogined(@Token() user: UserInfo) {
-    return {
-      code: 0,
-      message: 'success',
-      data: { ...user },
-    };
+    return user;
   }
 
   // async checkLogined(@Headers('authorization') authHeader: string) {
