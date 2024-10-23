@@ -8,9 +8,11 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
-import { Token } from '@/common';
-import { JwtAuthGuard } from './guard/jwt.guard';
+import { Public, Token, JwtAuthGuard } from '@/common';
 import { UserInfo } from '@/common/models';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -18,7 +20,10 @@ export class AuthController {
     private readonly jwtService: JwtService,
   ) {}
 
+  @Public()
   @Post('/login')
+  @ApiOperation({ summary: 'login' })
+  @ApiResponse({ status: 0, description: 'login success' })
   async login(@Body() body: { credential: string }) {
     if (!body.credential) {
       return new ForbiddenException('User information is abnormal');
